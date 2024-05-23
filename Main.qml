@@ -1,16 +1,31 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 
+//import complexity 1.0
+
 ApplicationWindow {
+    id: window
     visible: true
     width: 640
     height: 480
     title: "Math Game"
+    //color: 'red'
 
     property int score: 0
-    property int difficulty: 1
+    property int points: 1
     property int correctAnswer: -1
-    property int timeLeft: 7
+    property int timeLeft: 100
+    property int blitsProbability: -1
+    //property Сomplexity currentСomplexity: EASY
+    property list<int> nums: [0, 0, 0, 0, 0, 0]
+    property list<string> operations: ['', '', '', '', '']
+    property int parametersCount: 0
+    property int blitsLock: 10
+    property bool blitsQuestion: false
+
+    property color startColor: "red"
+    property color endColor: "blue"
+
 
     Timer {
         id: timer
@@ -26,36 +41,123 @@ ApplicationWindow {
     }
 
     function generateQuestion() {
-        var a, b, c, d, e;
+/*
+        blitsQuestion = false
+        button1.visible = false;
+        button2.visible = false;
+        button3.visible = false;
+        button4.visible = false;
+        questionText1.visible = true;
+        generateBlitsQuestion()
+        makeQuestionText()
+*/
 
-        do {
-            // Генерируем случайные числа для a и b в диапазоне от 0 до 10
-            a = Math.floor(Math.random() * 4);
-            b = Math.floor(Math.random() * 4);
+        if(!blitsLock) blitsProbability = Math.random() * 100
 
-            // Проверяем количество очков для генерации чисел c, d и e
-            if (score > 100)   c = Math.floor(Math.random() * 4);
-            if (score > 1000)  d = Math.floor(Math.random() * 4);
-            if (score > 10000) e = Math.floor(Math.random() * 4);
-
-            // Генерируем случайные операторы + или -
-            var op1 = Math.random() < 0.5 ? '+' : '-';
-            var op2 = Math.random() < 0.5 ? '+' : '-';
-            var op3 = Math.random() < 0.5 ? '+' : '-';
-            var op4 = Math.random() < 0.5 ? '+' : '-';
-
-            // Вычисляем правильный ответ на основе операторов и чисел a, b, c, d, e
-            correctAnswer = (op1 == '+' ? a + b : a - b) + (c !== undefined ? (op2 == '+' ? c : -c) : 0) + (d !== undefined ? (op3 == '+' ? d : -d) : 0) + (e !== undefined ? (op4 == '+' ? e : -e) : 0);
-
-            // Формируем текст вопроса
-            questionText.text = a + " " + op1 + " " + b + (c !== undefined ? " " + op2 + " " + c : "") + (d !== undefined ? " " + op3 + " " + d : "") + (e !== undefined ? " " + op4 + " " + e : "") + " = ?";
-
-            // Устанавливаем время
-            timeLeft = 8;
-            // Добавляем проверку для генерации усложненных примеров с шансом в 30%
-        } while (correctAnswer < 0 || correctAnswer > 3)
+        if(blitsProbability != -1)
+        {
+            blitsQuestion = false
+            button1.visible = false;
+            button2.visible = false;
+            button3.visible = false;
+            button4.visible = false;
+            questionText1.visible = true;
+            generateBlitsQuestion()
+            blitsLock = 10
+            blitsProbability = -1
+            animation.start()
+        }
+        else
+        {
+            blitsLock--
+            blitsQuestion = true
+            questionText1.visible = false;
+            button1.visible = true;
+            button2.visible = true;
+            button3.visible = true;
+            button4.visible = true;
+            //currentСomplexity = 1
+            generateUsualQuestion()
+        }
+        makeQuestionText()
 
     }
+
+    function generateUsualQuestion() {
+        parametersCount = 2
+        do {
+            nums[0] = Math.floor(Math.random() * 4);
+            nums[1] = Math.floor(Math.random() * 4);
+
+            if (score > 100)
+            {
+                parametersCount++
+                nums[2] = Math.floor(Math.random() * 4);
+            }
+            if (score > 1000)
+            {
+                parametersCount++
+                nums[3] = Math.floor(Math.random() * 4);
+            }
+            if (score > 10000)
+            {
+                parametersCount++
+                nums[4] = Math.floor(Math.random() * 4);
+            }
+
+            correctAnswer = nums[0];
+            for(var i = 1; i < parametersCount; i++){
+                operations[i-1] = Math.random() < 0.5 ? '+' : '-';
+                correctAnswer += operations[i-1] === '+' ? nums[i] : -1*nums[i]
+            }
+        } while (correctAnswer < 0 || correctAnswer > 3)
+
+        makeQuestionText()
+        timeLeft = 7
+    }
+
+    function generateBlitsQuestion() {
+        parametersCount = 3
+
+        nums[0] = Math.floor(Math.random() * 10)
+        nums[1] = Math.floor(Math.random() * 10)
+        nums[2] = Math.floor(Math.random() * 10)
+
+        parametersCount = Math.floor(Math.random() * 4 + 3);
+
+        if (parametersCount > 3) nums[3] = Math.floor(Math.random() * 10);
+        if (parametersCount > 4) nums[4] = Math.floor(Math.random() * 10);
+        if (parametersCount > 5) nums[5] = Math.floor(Math.random() * 10);
+
+        correctAnswer = parseInt(nums[0]);
+        for(var i = 1; i < parametersCount; i++){
+            operations[i-1] = Math.random() < 0.5 ? '+' : '-'
+            correctAnswer += operations[i-1] === '+' ? parseInt(nums[i]) : parseInt(-1*nums[i])
+        }
+
+        makeQuestionText()
+        timeLeft = Math.floor(Math.random() * 7 + 14);
+    }
+
+    function makeQuestionText(){
+        questionText.text = ''
+        console.log('sdfsdfsfd   ' + questionText.text)
+        for(var i = 0; i < parametersCount; i++){
+            if(i != parametersCount-1) questionText.text += String(nums[i]) + " " + operations[i] + " "
+            else questionText.text += String(nums[i])
+        }
+
+        ///*
+        questionText.text += ' = ?'
+        console.log('---------------------')
+        console.log(parametersCount)
+        console.log(nums)
+        console.log(correctAnswer)
+        console.log(operations)
+        console.log(questionText.text)
+        //*/
+    }
+
     // Функция для генерации случайного цвета
 //    function getRandomColor() {
 //        var letters = "0123456789ABCDEF";
@@ -73,8 +175,8 @@ ApplicationWindow {
 
     function checkAnswer(answer) {
         if (answer === correctAnswer) {
-            score += difficulty;
-            difficulty++;
+            score += blitsQuestion ? 2*points : points;
+            points++;
             generateQuestion();
         } else {
             gameOver();
@@ -86,7 +188,7 @@ ApplicationWindow {
         gameOverScreen.visible = true;
     }
 
-    Text {
+        Text {
             id: timerText
             text: "Оставшееся время: " + timeLeft
             anchors.top: parent.top
@@ -106,6 +208,7 @@ ApplicationWindow {
         Column {
             spacing: 10
             anchors.centerIn: parent
+            visible: true
 
             Text {
                 id: questionText
@@ -114,44 +217,70 @@ ApplicationWindow {
                 horizontalAlignment: Text.AlignHCenter
             }
 
+            TextField {
+                id: questionText1
+                font.pixelSize: 40
+                width: questionText.width
+                text: ""
+                horizontalAlignment: Text.AlignHCenter
+                visible: false
+                validator: IntValidator {bottom: -100; top: 99}
+                onAccepted: {
+                    //if(blitsQuestion) animation.stop()
+                    animation.stop()
+                    window.color = 'white'
+                    checkAnswer(parseInt(questionText1.text))
+                    questionText1.text = ''
+                }
+            }
+
             Button {
+                id: button1
                 text: "0"
                 height: 50
                 onClicked: checkAnswer(0)
-                width: parent.width
+                width: questionText.width
+                visible: true
             }
 
             Button {
+                id: button2
                 text: "1"
                 height: 50
                 onClicked: checkAnswer(1)
-                width: parent.width
+                width: questionText.width
+                visible: true
             }
 
             Button {
+                id: button3
                 text: "2"
                 height: 50
                 onClicked: checkAnswer(2)
-                width: parent.width
+                width: questionText.width
+                visible: true
             }
 
             Button {
+                id: button4
                 text: "3"
                 height: 50
                 onClicked: checkAnswer(3)
-                width: parent.width
+                width: questionText.width
+                visible: true
             }
             Button {
                 text: "Перезагрузить"
                 height: 50
                 onClicked: {
+                    window.color = 'white'
                     score = 0;
-                    difficulty = 1;
+                    points = 1;
                     generateQuestion();
                     timer.running = true;
                     gameOverScreen.visible = false;
                 }
-                width: parent.width
+                width: questionText.width
             }
         }
 
@@ -160,12 +289,37 @@ ApplicationWindow {
             visible: false
             onRestart: {
                 score = 0;
-                difficulty = 1;
+                points = 1;
+                window.color = 'white'
                 generateQuestion();
                 timer.running = true;
                 visible = false;
             }
         }
 
+        SequentialAnimation {
+                id: animation
+
+                ColorAnimation {
+                    target: window
+                    property: "color"
+                    //from: startColor
+                    //to: endColor
+                    from: "blue"
+                    to: "red"
+                    duration: 1000
+                }
+
+                ColorAnimation  {
+                    target: window
+                    property: "color"
+                    //from: endColor
+                    //to: startColor
+                    from: "red"
+                    to: "blue"
+                    duration: 1000
+                }
+                loops: Animation.Infinite
+            }
         Component.onCompleted: generateQuestion()
     }
